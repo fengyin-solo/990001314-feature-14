@@ -833,3 +833,56 @@ a:hover { color: var(--primary-dark); }
         display: none;
     }
 }
+
+/* ========== Admin Auth / Session / Role ========== */
+.admin-banner {
+    padding: 10px 16px;
+    font-size: .9rem;
+    border-bottom: 1px solid var(--gray-200);
+}
+.admin-banner-error { background: #fef2f2; color: var(--danger); border-bottom-color: #fecaca; }
+.admin-banner-info { background: #eff6ff; color: #1d4ed8; border-bottom-color: #bfdbfe; }
+.admin-main .admin-banner { border-radius: var(--radius-sm); border: 1px solid; margin-bottom: 16px; }
+.admin-main .admin-banner-info { border-color: #bfdbfe; }
+.admin-main .admin-banner-error { border-color: #fecaca; }
+
+.role-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: .75rem;
+    font-weight: 600;
+    margin-left: 6px;
+    vertical-align: middle;
+}
+.role-badge-super_admin { background: #fef3c7; color: #92400e; }
+.role-badge-auditor { background: #d1fae5; color: #065f46; }
+.role-badge-viewer { background: #e5e7eb; color: #374151; }
+
+.badge-current { background: #dbeafe; color: #1d4ed8; margin-left: 6px; }
+
+.session-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.role-select {
+    padding: 4px 8px;
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius-sm);
+    font-size: .85rem;
+    background: #fff;
+}
+
+.login-tip {
+    text-align: center;
+    color: var(--gray-400);
+    font-size: .8rem;
+    margin-top: 12px;
+}
+
+.text-muted { color: var(--gray-400); font-size: .85rem; }

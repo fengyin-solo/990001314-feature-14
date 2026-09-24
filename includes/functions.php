@@ -1,4 +1,13 @@
 <?php
+// 会话 Cookie 安全参数（必须在 session_start 前设置）
+if (session_status() !== PHP_SESSION_ACTIVE && PHP_VERSION_ID >= 70300) {
+    session_set_cookie_params([
+        'lifetime' => 0,
+        'path'     => '/',
+        'httponly' => true,
+        'samesite' => 'Lax',
+    ]);
+}
 session_start();
 
 /**
@@ -58,16 +67,6 @@ function timeAgo($datetime) {
     if ($diff->h > 0) return $diff->h . '小时前';
     if ($diff->i > 0) return $diff->i . '分钟前';
     return '刚刚';
-}
-
-/**
- * 检查管理员登录
- */
-function requireAdmin() {
-    if (empty($_SESSION['admin_id'])) {
-        header('Location: login.php');
-        exit;
-    }
 }
 
 /**

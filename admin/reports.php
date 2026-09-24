@@ -1,12 +1,15 @@
 <?php
 require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../config/database.php';
-requireAdmin();
+require_once __DIR__ . '/../includes/auth.php';
+requireAdmin('report.view');
 
 $pageTitle = '举报管理 - 社区便民留言板';
 $currentPage = 'admin';
 $cssPath = '../assets/css/style.css';
 $jsPath = '../assets/js/main.js';
+
+$canProcess = roleCan($_SESSION['admin_role'], 'report.process');
 
 $db = getDB();
 
@@ -61,25 +64,18 @@ include __DIR__ . '/header.php';
 ?>
 
 <div class="admin-container">
-    <aside class="admin-sidebar">
-        <div class="sidebar-header">
-            <h3>📋 管理后台</h3>
-        </div>
-        <nav class="sidebar-nav">
-            <a href="index.php" class="sidebar-link">📝 留言管理</a>
-            <a href="index.php?status=0" class="sidebar-link">⏳ 待审核 <?= $pendingCount > 0 ? "($pendingCount)" : '' ?></a>
-            <a href="reports.php" class="sidebar-link active">🚩 举报管理</a>
-            <a href="reports.php?status=0" class="sidebar-link">⏳ 待处理 <?= $pendingCount > 0 ? "($pendingCount)" : '' ?></a>
-            <a href="../index.php" class="sidebar-link" target="_blank">🌐 查看前台</a>
-            <a href="logout.php" class="sidebar-link">🚪 退出登录</a>
-        </nav>
-    </aside>
+    <?php $activeNav = 'reports'; include __DIR__ . '/sidebar.php'; ?>
 
     <div class="admin-main">
         <div class="admin-header">
             <h2>举报管理</h2>
-            <span class="admin-user">👤 <?= cleanInput($_SESSION['admin_name']) ?></span>
+            <span class="admin-user">👤 <?= cleanInput($_SESSION['admin_name']) ?>
+                <span class="role-badge role-badge-<?= cleanInput($_SESSION['admin_role']) ?>"><?= roleLabel($_SESSION['admin_role']) ?></span>
+            </span>
         </div>
+        <?php if (!$canProcess): ?>
+        <div class="admin-banner admin-banner-info">👁️ 当前为只读角色，仅可查看举报，不能处理。</div>
+        <?php endif; ?>
 
         <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 20px;">
             <div class="stat-card">
@@ -158,7 +154,7 @@ include __DIR__ . '/header.php';
                         <td><?= $r['admin_name'] ? cleanInput($r['admin_name']) : '-' ?></td>
                         <td class="td-actions">
                             <button class="btn btn-xs btn-info" onclick="viewReport(<?= $r['id'] ?>)">查看</button>
-                            <?php if ($r['status'] == 0): ?>
+                            <?php if ($canProcess && $r['status'] == 0): ?>
                                 <button class="btn btn-xs btn-danger" onclick="processReport(<?= $r['id'] ?>, 1)">删除留言</button>
                                 <button class="btn btn-xs btn-success" onclick="processReport(<?= $r['id'] ?>, 2)">忽略</button>
                                 <button class="btn btn-xs btn-warning" onclick="processReport(<?= $r['id'] ?>, 3)">驳回</button>

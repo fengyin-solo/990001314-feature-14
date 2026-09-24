@@ -1,12 +1,16 @@
 <?php
 require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../config/database.php';
-requireAdmin();
+require_once __DIR__ . '/../includes/auth.php';
+requireAdmin('message.view');
 
 $pageTitle = '后台管理 - 社区便民留言板';
 $currentPage = 'admin';
 $cssPath = '../assets/css/style.css';
 $jsPath = '../assets/js/main.js';
+
+$canAudit = roleCan($_SESSION['admin_role'], 'message.audit');
+$canDelete = roleCan($_SESSION['admin_role'], 'message.delete');
 
 $db = getDB();
 
@@ -47,33 +51,22 @@ $stmt = $db->prepare($sql);
 $stmt->execute($params);
 $messages = $stmt->fetchAll();
 
-// 统计
-$pendingCount = $db->query("SELECT COUNT(*) FROM messages WHERE status = 0")->fetchColumn();
-
 include __DIR__ . '/header.php';
 ?>
 
 <div class="admin-container">
-    <aside class="admin-sidebar">
-        <div class="sidebar-header">
-            <h3>📋 管理后台</h3>
-        </div>
-        <nav class="sidebar-nav">
-            <a href="index.php" class="sidebar-link active">📝 留言管理</a>
-            <a href="index.php?status=0" class="sidebar-link">⏳ 待审核 <?= $pendingCount > 0 ? "($pendingCount)" : '' ?></a>
-            <a href="reports.php" class="sidebar-link">🚩 举报管理</a>
-            <?php $pendingReportCount = getPendingReportCount(); ?>
-            <a href="reports.php?status=0" class="sidebar-link">⏳ 待处理举报 <?= $pendingReportCount > 0 ? "($pendingReportCount)" : '' ?></a>
-            <a href="../index.php" class="sidebar-link" target="_blank">🌐 查看前台</a>
-            <a href="logout.php" class="sidebar-link">🚪 退出登录</a>
-        </nav>
-    </aside>
+    <?php $activeNav = 'messages'; include __DIR__ . '/sidebar.php'; ?>
 
     <div class="admin-main">
         <div class="admin-header">
             <h2>留言管理</h2>
-            <span class="admin-user">👤 <?= cleanInput($_SESSION['admin_name']) ?></span>
+            <span class="admin-user">👤 <?= cleanInput($_SESSION['admin_name']) ?>
+                <span class="role-badge role-badge-<?= cleanInput($_SESSION['admin_role']) ?>"><?= roleLabel($_SESSION['admin_role']) ?></span>
+            </span>
         </div>
+        <?php if (!$canAudit): ?>
+        <div class="admin-banner admin-banner-info">👁️ 当前为只读角色，仅可查看留言，不能审核或删除。</div>
+        <?php endif; ?>
 
         <!-- 筛选栏 -->
         <div class="admin-filter">
@@ -126,13 +119,15 @@ include __DIR__ . '/header.php';
                         <td class="td-time"><?= date('m-d H:i', strtotime($msg['created_at'])) ?></td>
                         <td class="td-actions">
                             <button class="btn btn-xs btn-info" onclick="viewMessage(<?= $msg['id'] ?>)">查看</button>
-                            <?php if ($msg['status'] != 1): ?>
+                            <?php if ($canAudit && $msg['status'] != 1): ?>
                             <button class="btn btn-xs btn-success" onclick="auditMessage(<?= $msg['id'] ?>, 1)">通过</button>
                             <?php endif; ?>
-                            <?php if ($msg['status'] != 2): ?>
+                            <?php if ($canAudit && $msg['status'] != 2): ?>
                             <button class="btn btn-xs btn-warning" onclick="auditMessage(<?= $msg['id'] ?>, 2)">拒绝</button>
                             <?php endif; ?>
+                            <?php if ($canDelete): ?>
                             <button class="btn btn-xs btn-danger" onclick="deleteMessage(<?= $msg['id'] ?>)">删除</button>
+                            <?php endif; ?>
                         </td>
                     </tr>
                     <?php endforeach; ?>
