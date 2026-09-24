@@ -1,5 +1,9 @@
 <?php
-session_start();
+/**
+ * 公共函数
+ * 会话启动、后台鉴权与权限控制统一在 auth.php 中实现
+ */
+require_once __DIR__ . '/auth.php';
 
 /**
  * 返回JSON响应
@@ -61,17 +65,7 @@ function timeAgo($datetime) {
 }
 
 /**
- * 检查管理员登录
- */
-function requireAdmin() {
-    if (empty($_SESSION['admin_id'])) {
-        header('Location: login.php');
-        exit;
-    }
-}
-
-/**
- * 过滤输入
+ * 过滤输入（同时用于 HTML 输出转义）
  */
 function cleanInput($str) {
     return htmlspecialchars(trim($str), ENT_QUOTES, 'UTF-8');

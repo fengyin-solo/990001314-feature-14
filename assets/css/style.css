@@ -828,8 +828,73 @@ a:hover { color: var(--primary-dark); }
     .report-type-options {
         grid-template-columns: 1fr;
     }
-    
+
     .report-text {
         display: none;
     }
+}
+
+/* ========== Admin Auth: 侧边栏用户 / 角色徽章 ========== */
+.sidebar-user {
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--gray-700);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    font-size: .85rem;
+}
+.sidebar-user-name { color: #fff; font-weight: 600; }
+.role-badge {
+    display: inline-block;
+    padding: 1px 8px;
+    border-radius: 10px;
+    font-size: .7rem;
+    font-weight: 600;
+}
+.role-super_admin { background: #4338ca; color: #fff; }
+.role-auditor { background: #d1fae5; color: #065f46; }
+.role-viewer { background: #e5e7eb; color: #374151; }
+
+/* 后台信息提示条 */
+.alert-success { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+.alert-warning { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+.alert-info { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; padding: 10px 14px; border-radius: var(--radius-sm); margin-bottom: 16px; font-size: .88rem; }
+.readonly-tip { margin-top: 4px; }
+
+/* 后台工具栏 */
+.admin-toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+
+/* 管理员页角色下拉 */
+.role-select {
+    padding: 3px 6px;
+    font-size: .75rem;
+    border: 1px solid var(--gray-300);
+    border-radius: 4px;
+    background: #fff;
+    cursor: pointer;
+}
+.role-select:disabled { background: var(--gray-100); color: var(--gray-400); cursor: not-allowed; }
+
+/* 403 页面 */
+.forbidden-box {
+    background: #fff;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 60px 32px;
+    text-align: center;
+    max-width: 560px;
+    margin: 40px auto;
+}
+.forbidden-icon { font-size: 3.5rem; margin-bottom: 16px; }
+.forbidden-box h2 { margin-bottom: 12px; }
+.forbidden-box p { color: var(--gray-600); margin-bottom: 8px; font-size: .95rem; }
+.forbidden-actions { margin-top: 24px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+/* 会话管理表 */
+.admin-table .btn[disabled] { opacity: .5; cursor: not-allowed; }
+
+@media (max-width: 768px) {
+    .sidebar-user { padding: 6px 12px; border-bottom: none; }
+    .forbidden-box { padding: 36px 20px; }
 }

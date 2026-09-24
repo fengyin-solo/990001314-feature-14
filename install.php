@@ -37,8 +37,40 @@ try {
         `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
         `username` VARCHAR(50) NOT NULL UNIQUE,
         `password` VARCHAR(255) NOT NULL,
+        `role` VARCHAR(20) NOT NULL DEFAULT 'super_admin' COMMENT '角色: super_admin超级管理员, auditor审核员, viewer只读账号',
+        `status` TINYINT NOT NULL DEFAULT 1 COMMENT '状态: 1启用, 0停用',
         `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='管理员表'");
+
+    // 后台登录会话表（每个设备一行，支持远程退出）
+    $pdo->exec("CREATE TABLE IF NOT EXISTS `admin_sessions` (
+        `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        `token` CHAR(64) NOT NULL COMMENT '会话令牌',
+        `admin_id` INT UNSIGNED NOT NULL COMMENT '管理员ID',
+        `login_ip` VARCHAR(45) NOT NULL DEFAULT '' COMMENT '登录IP',
+        `last_ip` VARCHAR(45) NOT NULL DEFAULT '' COMMENT '最近请求IP',
+        `user_agent` VARCHAR(255) NOT NULL DEFAULT '' COMMENT '浏览器UA',
+        `login_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '登录时间',
+        `last_active_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '最后活跃时间',
+        `expires_at` DATETIME NOT NULL COMMENT '绝对过期时间',
+        `revoked_at` DATETIME DEFAULT NULL COMMENT '失效时间',
+        `revoke_reason` VARCHAR(30) DEFAULT NULL COMMENT '失效原因',
+        UNIQUE KEY `uk_token` (`token`),
+        INDEX `idx_admin_id` (`admin_id`),
+        INDEX `idx_active` (`admin_id`, `revoked_at`, `expires_at`),
+        INDEX `idx_last_active` (`last_active_at`),
+        FOREIGN KEY (`admin_id`) REFERENCES `admins`(`id`) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='后台登录会话表'");
+
+    // 后台登录失败记录表（连续失败锁定）
+    $pdo->exec("CREATE TABLE IF NOT EXISTS `login_failures` (
+        `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        `username` VARCHAR(50) NOT NULL COMMENT '尝试登录的用户名',
+        `ip` VARCHAR(45) NOT NULL COMMENT '来源IP',
+        `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '失败时间',
+        INDEX `idx_account_ip_time` (`username`, `ip`, `created_at`),
+        INDEX `idx_created_at` (`created_at`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='后台登录失败记录'");
 
     // 收藏表
     $pdo->exec("CREATE TABLE IF NOT EXISTS `favorites` (
@@ -73,10 +105,16 @@ try {
         FOREIGN KEY (`processed_by`) REFERENCES `admins`(`id`) ON DELETE SET NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='举报表'");
 
-    // 插入默认管理员 admin/admin123
+    // 插入默认管理员 admin/admin123（超级管理员）
     $hash = password_hash('admin123', PASSWORD_DEFAULT);
-    $stmt = $pdo->prepare("INSERT IGNORE INTO `admins` (`username`, `password`) VALUES ('admin', ?)");
+    $stmt = $pdo->prepare("INSERT IGNORE INTO `admins` (`username`, `password`, `role`, `status`) VALUES ('admin', ?, 'super_admin', 1)");
     $stmt->execute([$hash]);
+
+    // 演示账号：审核员 / 只读账号
+    $stmt = $pdo->prepare("INSERT IGNORE INTO `admins` (`username`, `password`, `role`, `status`) VALUES (?, ?, 'auditor', 1)");
+    $stmt->execute(['auditor', password_hash('auditor123', PASSWORD_DEFAULT)]);
+    $stmt = $pdo->prepare("INSERT IGNORE INTO `admins` (`username`, `password`, `role`, `status`) VALUES (?, ?, 'viewer', 1)");
+    $stmt->execute(['viewer', password_hash('viewer123', PASSWORD_DEFAULT)]);
 
     // 插入测试数据
     $testData = [
@@ -100,7 +138,9 @@ try {
 
     echo "<h2>安装成功！</h2>";
     echo "<p>数据库和表已创建完成，测试数据已插入。</p>";
-    echo "<p>后台管理账号：<strong>admin</strong> / <strong>admin123</strong></p>";
+    echo "<p>超级管理员：<strong>admin</strong> / <strong>admin123</strong></p>";
+    echo "<p>审核员：<strong>auditor</strong> / <strong>auditor123</strong>（可审核、删除、处理举报）</p>";
+    echo "<p>只读账号：<strong>viewer</strong> / <strong>viewer123</strong>（仅可查看）</p>";
     echo "<p><a href='index.php'>访问首页</a> | <a href='admin/login.php'>进入后台</a></p>";
     echo "<p style='color:red;'>请删除此安装文件 (install.php) 以确保安全！</p>";
 
